@@ -1,4 +1,4 @@
-// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
+ii// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
 // @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
@@ -15,7 +15,8 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = 'aatgcwfk:aq49d68rhqpq@64.137.42.112:5157';
+let socks5Address = '115.240.101.49:8080';
+ '139.84.135.239:8080':
 
  'ntop:vip@wifi.getnova.tech:80';
 
