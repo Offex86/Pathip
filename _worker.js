@@ -15,9 +15,7 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = 'aatgcwfk:aq49d68rhqpq@64.137.42.112:5157';
-
- 'ntop:vip@wifi.getnova.tech:80';
+let socks5Address = 'ntop:vip@wifi.getnova.tech:80';
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
