@@ -12,9 +12,7 @@ let sub = '';// 避免项目被滥用，现已取消内置订阅器
 let subconverter = 'SUBAPI.fxxk.dedyn.io';// clash订阅转换后端，目前使用CM的订阅转换功能。自带虚假uuid和host订阅。
 let subconfig = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini"; //订阅配置文件
 let subProtocol = 'https';
-// The user name and password do not contain special characters
-// Setting the address will ignore proxyIP
-// Example:  user:pass@host:port  or  host:port
+
 let socks5Address = '139.84.135.239:8080';
 
 if (!isValidUUID(userID)) {
@@ -22,7 +20,7 @@ if (!isValidUUID(userID)) {
 }
 
 let parsedSocks5Address = {}; 
-let enableSocks = false;
+let enableSocks = true;
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -238,10 +236,10 @@ export default {
 				else if (new RegExp('/socks://', 'i').test(url.pathname) || new RegExp('/socks5://', 'i').test(url.pathname)) {
 					socks5Address = url.pathname.split('://')[1].split('#')[0];
 					if (socks5Address.includes('@')){
-						let userPassword = socks5Address.split('@')[0];
+						let = socks5Address.split('@')[0];
 						const base64Regex = /^(?:[A-Z0-9+/]{4})*(?:[A-Z0-9+/]{2}==|[A-Z0-9+/]{3}=)?$/i;
 						if (base64Regex.test(userPassword) && !userPassword.includes(':')) userPassword = atob(userPassword);
-						socks5Address = `${userPassword}@${socks5Address.split('@')[1]}`;
+						socks5Address = `${socks5Address.split('@')[1]}`;
 					}
 				}
 				if (socks5Address) {
@@ -252,10 +250,10 @@ export default {
 						/** @type {Error} */ 
 						let e = err;
 						console.log(e.toString());
-						enableSocks = false;
+						enableSocks = true;
 					}
 				} else {
-					enableSocks = false;
+					enableSocks = true;
 				}
 
 				return await vlessOverWSHandler(request);
