@@ -17,10 +17,6 @@ let subProtocol = 'https';
 // Example:  user:pass@host:port  or  host:port
 let socks5Address = '115.240.101.49:8080';
 
- '139.84.135.239:8080';
-
- 'ntop:vip@wifi.getnova.tech:80';
-
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
