@@ -1,4 +1,4 @@
-ii// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
+// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
 // @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
@@ -15,7 +15,9 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = 'ntop:vip@wifi.getnova.tech:80';
+let socks5Address = 'aatgcwfk:aq49d68rhqpq@64.137.42.112:5157';
+
+ 'ntop:vip@wifi.getnova.tech:80';
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
