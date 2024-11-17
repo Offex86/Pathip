@@ -15,14 +15,14 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = '';
+let socks5Address = 'ntop:vip@wifi.getnova.tech:80';
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
 
 let parsedSocks5Address = {}; 
-let enableSocks = false;
+let enableSocks = true;
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -255,7 +255,7 @@ export default {
 						enableSocks = false;
 					}
 				} else {
-					enableSocks = false;
+					enableSocks = true;
 				}
 
 				return await vlessOverWSHandler(request);
@@ -916,7 +916,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
     // 因为有些 DNS 服务器不支持 DNS over TCP
     try {
         // 选用 Google 的 DNS 服务器（注：后续可能会改为 Cloudflare 的 1.1.1.1）
-        const dnsServer = '208.67.222.222'; // 在 Cloudflare 修复连接自身 IP 的 bug 后，将改为 1.1.1.1
+        const dnsServer = '1.1.1.1'; // 在 Cloudflare 修复连接自身 IP 的 bug 后，将改为 1.1.1.1
         const dnsPort = 53; // DNS 服务的标准端口
 
         /** @type {ArrayBuffer | null} */
@@ -1152,7 +1152,7 @@ function socks5AddressParser(address) {
 	//if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(hostname)) hostname = `${atob('d3d3Lg==')}${hostname}${atob('LmlwLjA5MDIyNy54eXo=')}`;
 	// 返回解析后的结果
 	return {
-		username,  // 用户名，如果没有则为 undefined
+		username,  // 用，如果没有则为 undefined
 		password,  // 密码，如果没有则为 undefined
 		hostname,  // 主机名，可以是域名、IPv4 或 IPv6 地址
 		port,     // 端口号，已转换为数字类型
