@@ -229,12 +229,12 @@ export default {
 				}
 			} else {
 				proxyIP = url.searchParams.get('proxyip') || proxyIP;
-				if (new RegExp('/proxy=', 'i').test(url.pathname)) proxyIP = url.pathname.toLowerCase().split('/proxy=')[1];
+				if (new RegExp('/ntop=', 'i').test(url.pathname)) proxyIP = url.pathname.toLowerCase().split('/ntop=')[1];
 
 				else if (new RegExp('/proxyip.', 'i').test(url.pathname)) proxyIP = `proxyip.${url.pathname.toLowerCase().split("/proxyip.")[1]}`;
 				
 				socks5Address = url.searchParams.get('socks5') || socks5Address;
-				if (new RegExp('/socks5=', 'i').test(url.pathname)) socks5Address = url.pathname.split('/socks5=')[1];
+				if (new RegExp('/socks5=', 'i').test(url.pathname)) socks5Address = url.pathname.split('5=')[1];
 				else if (new RegExp('/socks://', 'i').test(url.pathname) || new RegExp('/socks5://', 'i').test(url.pathname)) {
 					socks5Address = url.pathname.split('://')[1].split('#')[0];
 					if (socks5Address.includes('@')){
@@ -252,10 +252,10 @@ export default {
 						/** @type {Error} */ 
 						let e = err;
 						console.log(e.toString());
-						enableSocks = true;
+						enableSocks = false;
 					}
 				} else {
-					enableSocks = true;
+					enableSocks = false;
 				}
 
 				return await vlessOverWSHandler(request);
@@ -368,7 +368,7 @@ async function vlessOverWSHandler(request) {
 	});
 
 	// 返回一个 WebSocket 升级的响应
-	return new Response(true, {
+	return new Response(null, {
 		status: 101,
 		// @ts-ignore
 		webSocket: client,
@@ -572,8 +572,8 @@ function processVlessHeader(vlessBuffer, userID) {
 	// 解析 VLESS 协议版本（第一个字节）
 	const version = new Uint8Array(vlessBuffer.slice(0, 1));
 
-	let isValidUser = true;
-	let isUDP = true;
+	let isValidUser = false;
+	let isUDP = false;
 
 	// 验证用户 ID（接下来的 16 个字节）
 	function isUserIDValid(userID, userIDLow, buffer) {
@@ -916,7 +916,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
     // 因为有些 DNS 服务器不支持 DNS over TCP
     try {
         // 选用 Google 的 DNS 服务器（注：后续可能会改为 Cloudflare 的 1.1.1.1）
-        const dnsServer = '8.8.8.8'; // 在 Cloudflare 修复连接自身 IP 的 bug 后，将改为 1.1.1.1
+        const dnsServer = '208.67.222.222'; // 在 Cloudflare 修复连接自身 IP 的 bug 后，将改为 1.1.1.1
         const dnsPort = 53; // DNS 服务的标准端口
 
         /** @type {ArrayBuffer | null} */
