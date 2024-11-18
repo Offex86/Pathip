@@ -1,5 +1,3 @@
-// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
-// @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
 // How to generate your own UUID:
@@ -12,7 +10,9 @@ let sub = '';// 避免项目被滥用，现已取消内置订阅器
 let subconverter = 'SUBAPI.fxxk.dedyn.io';// clash订阅转换后端，目前使用CM的订阅转换功能。自带虚假uuid和host订阅。
 let subconfig = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini"; //订阅配置文件
 let subProtocol = 'https';
-
+// The user name and password do not contain special characters
+// Setting the address will ignore proxyIP
+// Example:  user:pass@host:port  or  host:port
 let socks5Address = '139.84.135.239:8080';
 
 if (!isValidUUID(userID)) {
@@ -20,7 +20,7 @@ if (!isValidUUID(userID)) {
 }
 
 let parsedSocks5Address = {}; 
-let enableSocks = true;
+let enableSocks = false;
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -130,16 +130,21 @@ export default {
 			}
 			subconfig = env.SUBCONFIG || subconfig;
 			if (socks5Address) {
-				try {
-					parsedSocks5Address = socks5AddressParser(socks5Address);
-					RproxyIP = env.RPROXYIP || 'false';
-					enableSocks = true;
-				} catch (err) {
-  					/** @type {Error} */ 
-					let e = err;
-					console.log(e.toString());
-					RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
-					enableSocks = false;
+    try {
+        // Directly parse SOCKS5 address without user authentication
+        let parts = socks5Address.split(':');
+        parsedSocks5Address = {
+            host: parts[0],
+            port: parts[1] || '1080', // Default SOCKS5 port is 1080
+        };
+        enableSocks = true; // Enable SOCKS without authentication
+    } catch (err) {
+        console.error("Invalid SOCKS5 Address:", err);
+        enableSocks = false;
+    }
+} else {
+    enableSocks = false;
+}
 				}
 			} else {
 				RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
@@ -236,10 +241,10 @@ export default {
 				else if (new RegExp('/socks://', 'i').test(url.pathname) || new RegExp('/socks5://', 'i').test(url.pathname)) {
 					socks5Address = url.pathname.split('://')[1].split('#')[0];
 					if (socks5Address.includes('@')){
-						let = socks5Address.split('@')[0];
+						let userPassword = socks5Address.split('@')[0];
 						const base64Regex = /^(?:[A-Z0-9+/]{4})*(?:[A-Z0-9+/]{2}==|[A-Z0-9+/]{3}=)?$/i;
 						if (base64Regex.test(userPassword) && !userPassword.includes(':')) userPassword = atob(userPassword);
-						socks5Address = `${socks5Address.split('@')[1]}`;
+						socks5Address = `${userPassword}@${socks5Address.split('@')[1]}`;
 					}
 				}
 				if (socks5Address) {
@@ -250,10 +255,10 @@ export default {
 						/** @type {Error} */ 
 						let e = err;
 						console.log(e.toString());
-						enableSocks = true;
+						enableSocks = false;
 					}
 				} else {
-					enableSocks = true;
+					enableSocks = false;
 				}
 
 				return await vlessOverWSHandler(request);
