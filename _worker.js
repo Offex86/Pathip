@@ -11,18 +11,16 @@ let proxyIP = '';// 小白勿动，该地址并不影响你的网速，这是给
 let sub = '';// 避免项目被滥用，现已取消内置订阅器
 let subconverter = 'SUBAPI.fxxk.dedyn.io';// clash订阅转换后端，目前使用CM的订阅转换功能。自带虚假uuid和host订阅。
 let subconfig = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini"; //订阅配置文件
-let subProtocol = 'https';
-// The user name and password do not contain special characters
-// Setting the address will ignore proxyIP
-// Example:  user:pass@host:port  or  host:port
-let socks5Address = '';
+let subProtocol = 'http';
+
+let socks5Address = ''; // Removed SOCKS5 proxy address
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
 
-let parsedSocks5Address = {}; 
-let enableSocks = false;
+// let parsedSocks5Address = {}; 
+let enableSocks = true; // SOCKS5 proxy disabled completely
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -132,19 +130,17 @@ export default {
 			}
 			subconfig = env.SUBCONFIG || subconfig;
 			if (socks5Address) {
-    try {
-        // Directly parse SOCKS5 address without user authentication
-        let parts = socks5Address.split(':');
-        parsedSocks5Address = {};
-        
-        enableSocks = true; // Enable SOCKS without authentication
-    } catch (err) {
-        console.error("Invalid SOCKS5 Address:", error);
-        enableSocks = false;
-    }
-} else {
-    enableSocks = false;
-}
+				try {
+// 					parsedSocks5Address = socks5AddressParser(socks5Address);
+					RproxyIP = env.RPROXYIP || 'false';
+					enableSocks = true;
+				} catch (err) {
+  					/** @type {Error} */ 
+					let e = err;
+					console.log(e.toString());
+					RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
+					enableSocks = false;
+				}
 			} else {
 				RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
 			}
@@ -248,7 +244,7 @@ export default {
 				}
 				if (socks5Address) {
 					try {
-						parsedSocks5Address = socks5AddressParser(socks5Address);
+// 						parsedSocks5Address = socks5AddressParser(socks5Address);
 						enableSocks = true;
 					} catch (err) {
 						/** @type {Error} */ 
@@ -430,7 +426,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 	 * 这可能是因为某些网络问题导致的连接失败
 	 */
 	async function retry() {
-		if (enableSocks) {
+// 		if (enableSocks) {
 			// 如果启用了 SOCKS5，通过 SOCKS5 代理重试连接
 			tcpSocket = await connectAndWrite(addressRemote, portRemote, true);
 		} else {
@@ -972,8 +968,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
  * @param {number} portRemote 目标端口
  * @param {function} log 日志记录函数
  */
-async function socks5Connect(addressType, addressRemote, portRemote, log) {
-	const { username, password, hostname, port } = parsedSocks5Address;
+// SOCKS5 connection logic removed for direct connectivity
 	// 连接到 SOCKS5 代理服务器
 	const socket = connect({
 		hostname, // SOCKS5 服务器的主机名
@@ -1400,7 +1395,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 
 		let 订阅器 = '\n';
 		if (!sub || sub == '') {
-			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
+// 			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
 			else if (proxyIP && proxyIP != '') 订阅器 += `CFCDN（访问方式）: ProxyIP\n  ${proxyIPs.join('\n  ')}\n`;
 			else 订阅器 += `CFCDN（访问方式）: 无法访问, 需要您设置 proxyIP/PROXYIP ！！！\n`;
 			订阅器 += `\n您的订阅内容由 内置 addresses/ADD* 参数变量提供\n`;
@@ -1410,7 +1405,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 			if (addressesnotlsapi.length > 0) 订阅器 += `ADDNOTLSAPI（noTLS优选域名&IP 的 API）: \n  ${addressesnotlsapi.join('\n  ')}\n`;
 			if (addressescsv.length > 0) 订阅器 += `ADDCSV（IPTest测速csv文件 限速 ${DLS} ）: \n  ${addressescsv.join('\n  ')}\n`;
 		} else {
-			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
+// 			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
 			else if (proxyIP && proxyIP != '') 订阅器 += `CFCDN（访问方式）: ProxyIP\n  ${proxyIPs.join('\n  ')}\n`;
 			else if (RproxyIP == 'true') 订阅器 += `CFCDN（访问方式）: 自动获取ProxyIP\n`;
 			else 订阅器 += `CFCDN（访问方式）: 无法访问, 需要您设置 proxyIP/PROXYIP ！！！\n`
