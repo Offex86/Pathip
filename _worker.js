@@ -135,13 +135,11 @@ export default {
     try {
         // Directly parse SOCKS5 address without user authentication
         let parts = socks5Address.split(':');
-        parsedSocks5Address = {
-            host: parts[0],
-            port: parts[1] || '1080', // Default SOCKS5 port is 1080
-        };
+        parsedSocks5Address = {};
+        
         enableSocks = true; // Enable SOCKS without authentication
     } catch (err) {
-        console.error("Invalid SOCKS5 Address:", err);
+        console.error("Invalid SOCKS5 Address:", error);
         enableSocks = false;
     }
 } else {
