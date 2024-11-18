@@ -15,14 +15,14 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = ''; // SOCKS5 proxy address cleared
+let socks5Address = ''; // Removed SOCKS5 proxy address
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
 
-let parsedSocks5Address = {}; 
-let enableSocks = false; // Disabled SOCKS5 proxy automation
+// let parsedSocks5Address = {}; 
+let enableSocks = false; // SOCKS5 proxy disabled completely
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -133,7 +133,7 @@ export default {
 			subconfig = env.SUBCONFIG || subconfig;
 			if (socks5Address) {
 				try {
-					parsedSocks5Address = socks5AddressParser(socks5Address);
+// 					parsedSocks5Address = socks5AddressParser(socks5Address);
 					RproxyIP = env.RPROXYIP || 'false';
 					enableSocks = true;
 				} catch (err) {
@@ -246,7 +246,7 @@ export default {
 				}
 				if (socks5Address) {
 					try {
-						parsedSocks5Address = socks5AddressParser(socks5Address);
+// 						parsedSocks5Address = socks5AddressParser(socks5Address);
 						enableSocks = true;
 					} catch (err) {
 						/** @type {Error} */ 
@@ -970,8 +970,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
  * @param {number} portRemote 目标端口
  * @param {function} log 日志记录函数
  */
-// async function socks5Connect(addressType, addressRemote, portRemote, log) {
-	const { username, password, hostname, port } = parsedSocks5Address;
+// SOCKS5 connection logic removed for direct connectivity
 	// 连接到 SOCKS5 代理服务器
 	const socket = connect({
 		hostname, // SOCKS5 服务器的主机名
