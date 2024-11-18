@@ -131,19 +131,17 @@ export default {
 				subconverter = subconverter.split("//")[1] || subconverter;
 			}
 			subconfig = env.SUBCONFIG || subconfig;
-if (socks5Address) {
-    try {
-        // Directly parse SOCKS5 address without user authentication
-        let parts = socks5Address.split(':');
-        parsedSocks5Address = {};
-        enableSocks = true; // Enable SOCKS without authentication
-    } catch (err) {
-        console.error("Invalid SOCKS5 Address:", err);
-        enableSocks = false;
-    }
-} else {
-    enableSocks = false;
-}
+			if (socks5Address) {
+				try {
+					parsedSocks5Address = socks5AddressParser(socks5Address);
+					RproxyIP = env.RPROXYIP || 'false';
+					enableSocks = true;
+				} catch (err) {
+  					/** @type {Error} */ 
+					let e = err;
+					console.log(e.toString());
+					RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
+					enableSocks = false;
 				}
 			} else {
 				RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
