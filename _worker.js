@@ -1,3 +1,5 @@
+// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2024-10-21 14:06:14 UTC<!--GAMFC-END-->.
+// @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
 // How to generate your own UUID:
@@ -129,14 +131,11 @@ export default {
 				subconverter = subconverter.split("//")[1] || subconverter;
 			}
 			subconfig = env.SUBCONFIG || subconfig;
-			if (socks5Address) {
+if (socks5Address) {
     try {
         // Directly parse SOCKS5 address without user authentication
         let parts = socks5Address.split(':');
-        parsedSocks5Address = {
-            host: parts[0],
-            port: parts[1] || '1080', // Default SOCKS5 port is 1080
-        };
+        parsedSocks5Address = {};
         enableSocks = true; // Enable SOCKS without authentication
     } catch (err) {
         console.error("Invalid SOCKS5 Address:", err);
