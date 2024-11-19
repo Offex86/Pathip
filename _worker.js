@@ -989,7 +989,7 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 	// METHODS 字段的含义:
 	// 0x00 不需要认证
 	// 0x02 用户名/密码认证 https://datatracker.ietf.org/doc/html/rfc1929
-	const socksGreeting = new Uint8Array([5, 1, 0]);
+	const socksGreeting = new Uint8Array([5, 2, 0, 2]);
 	// 5: SOCKS5 版本号, 2: 支持的认证方法数, 0和2: 两种认证方法（无认证和用户名/密码）
 
 	const writer = socket.writable.getWriter();
@@ -1016,14 +1016,33 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 	}
 
 	// 如果返回 0x0502，表示需要用户名/密码认证
-const socksGreeting = new Uint8Array([5, 1, 0]); // केवल बिना प्रमाणीकरण
-await writer.write(socksGreeting);
-log('已发送 SOCKS5 问候消息');
-const res = (await reader.read()).value;
-if (res[0] !== 0x05 || res[1] === 0xff) {
-    log("SOCKS5 服务器不接受任何认证方法");
-    return;
-}
+	if (res[1] === 0x02) {
+		log("SOCKS5 服务器需要认证");
+		if (!username || !password) {
+			log("请提供用户名和密码");
+			return;
+		}
+		// 认证请求格式:
+		// +----+------+----------+------+----------+
+		// |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
+		// +----+------+----------+------+----------+
+		// | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
+		// +----+------+----------+------+----------+
+		const authRequest = new Uint8Array([
+			1,                   // 认证子协议版本
+			username.length,    // 用户名长度
+			...encoder.encode(username), // 用户名
+			password.length,    // 密码长度
+			...encoder.encode(password)  // 密码
+		]);
+		await writer.write(authRequest);
+		res = (await reader.read()).value;
+		// 期望返回 0x0100 表示认证成功
+		if (res[0] !== 0x01 || res[1] !== 0x00) {
+			log("SOCKS5 服务器认证失败");
+			return;
+		}
+	}
 
 	// 请求数据格式（Worker -> SOCKS5 服务器）:
 	// +----+-----+-------+------+----------+----------+
