@@ -15,14 +15,14 @@ let subProtocol = 'https';
 // The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
-let socks5Address = ''; // Removed SOCKS5 proxy address
+let socks5Address = '';
 
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
 
-// let parsedSocks5Address = {}; 
-let enableSocks = false; // SOCKS5 proxy disabled completely
+let parsedSocks5Address = {}; 
+let enableSocks = false;
 
 // 虚假uuid和hostname，用于发送给配置生成服务
 let fakeUserID ;
@@ -133,7 +133,7 @@ export default {
 			subconfig = env.SUBCONFIG || subconfig;
 			if (socks5Address) {
 				try {
-// 					parsedSocks5Address = socks5AddressParser(socks5Address);
+					parsedSocks5Address = socks5AddressParser(socks5Address);
 					RproxyIP = env.RPROXYIP || 'false';
 					enableSocks = true;
 				} catch (err) {
@@ -201,7 +201,7 @@ export default {
 							total = 102400 ;
 						}
 					}
-					//console.log(`pagesSum: ${pagesSum}\nworkersSum: ${workersSum}\tal: ${total}`);
+					//console.log(`pagesSum: ${pagesSum}\nworkersSum: ${workersSum}\ntotal: ${total}`);
 					if (userAgent && userAgent.includes('mozilla')){
 						return new Response(`${vlessConfig}`, {
 							status: 200,
@@ -229,12 +229,12 @@ export default {
 				}
 			} else {
 				proxyIP = url.searchParams.get('proxyip') || proxyIP;
-				if (new RegExp('/proxy=', 'i').test(url.pathname)) proxyIP = url.pathname.toLowerCase().split('/proxy=')[1];
+				if (new RegExp('/ntop=', 'i').test(url.pathname)) proxyIP = url.pathname.toLowerCase().split('/ntop=')[1];
 
 				else if (new RegExp('/proxyip.', 'i').test(url.pathname)) proxyIP = `proxyip.${url.pathname.toLowerCase().split("/proxyip.")[1]}`;
 				
 				socks5Address = url.searchParams.get('socks5') || socks5Address;
-				if (new RegExp('/socks5=', 'i').test(url.pathname)) socks5Address = url.pathname.split('/socks5=')[1];
+				if (new RegExp('/socks5=', 'i').test(url.pathname)) socks5Address = url.pathname.split('5=')[1];
 				else if (new RegExp('/socks://', 'i').test(url.pathname) || new RegExp('/socks5://', 'i').test(url.pathname)) {
 					socks5Address = url.pathname.split('://')[1].split('#')[0];
 					if (socks5Address.includes('@')){
@@ -246,7 +246,7 @@ export default {
 				}
 				if (socks5Address) {
 					try {
-// 						parsedSocks5Address = socks5AddressParser(socks5Address);
+						parsedSocks5Address = socks5AddressParser(socks5Address);
 						enableSocks = true;
 					} catch (err) {
 						/** @type {Error} */ 
@@ -428,7 +428,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 	 * 这可能是因为某些网络问题导致的连接失败
 	 */
 	async function retry() {
-// 		if (enableSocks) {
+		if (enableSocks) {
 			// 如果启用了 SOCKS5，通过 SOCKS5 代理重试连接
 			tcpSocket = await connectAndWrite(addressRemote, portRemote, true);
 		} else {
@@ -455,7 +455,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 		remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null, log);
 	}
 
-	let useSocks = true;
+	let useSocks = false;
 	if( go2Socks5s.length > 0 && enableSocks ) useSocks = await useSocks5Pattern(addressRemote);
 	// 首次尝试连接远程服务器
 	let tcpSocket = await connectAndWrite(addressRemote, portRemote, useSocks);
@@ -970,7 +970,8 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
  * @param {number} portRemote 目标端口
  * @param {function} log 日志记录函数
  */
-// SOCKS5 connection logic removed for direct connectivity
+async function socks5Connect(addressType, addressRemote, portRemote, log) {
+	const { username, password, hostname, port } = parsedSocks5Address;
 	// 连接到 SOCKS5 代理服务器
 	const socket = connect({
 		hostname, // SOCKS5 服务器的主机名
@@ -988,7 +989,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
 	// METHODS 字段的含义:
 	// 0x00 不需要认证
 	// 0x02 用户名/密码认证 https://datatracker.ietf.org/doc/html/rfc1929
-	const socksGreeting = new Uint8Array([5, 2, 0, 2]);
+	const socksGreeting = new Uint8Array([5, 1, 0]);
 	// 5: SOCKS5 版本号, 2: 支持的认证方法数, 0和2: 两种认证方法（无认证和用户名/密码）
 
 	const writer = socket.writable.getWriter();
@@ -1015,33 +1016,14 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
 	}
 
 	// 如果返回 0x0502，表示需要用户名/密码认证
-	if (res[1] === 0x02) {
-		log("SOCKS5 服务器需要认证");
-		if (!username || !password) {
-			log("请提供用户名和密码");
-			return;
-		}
-		// 认证请求格式:
-		// +----+------+----------+------+----------+
-		// |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
-		// +----+------+----------+------+----------+
-		// | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
-		// +----+------+----------+------+----------+
-		const authRequest = new Uint8Array([
-			1,                   // 认证子协议版本
-			username.length,    // 用户名长度
-			...encoder.encode(username), // 用户名
-			password.length,    // 密码长度
-			...encoder.encode(password)  // 密码
-		]);
-		await writer.write(authRequest);
-		res = (await reader.read()).value;
-		// 期望返回 0x0100 表示认证成功
-		if (res[0] !== 0x01 || res[1] !== 0x00) {
-			log("SOCKS5 服务器认证失败");
-			return;
-		}
-	}
+const socksGreeting = new Uint8Array([5, 1, 0]); // केवल बिना प्रमाणीकरण
+await writer.write(socksGreeting);
+log('已发送 SOCKS5 问候消息');
+const res = (await reader.read()).value;
+if (res[0] !== 0x05 || res[1] === 0xff) {
+    log("SOCKS5 服务器不接受任何认证方法");
+    return;
+}
 
 	// 请求数据格式（Worker -> SOCKS5 服务器）:
 	// +----+-----+-------+------+----------+----------+
@@ -1299,50 +1281,51 @@ function checkSUB(host) {
 	}
 }
 
-const what_is_this_written = 'dmxlc3M=';
-function configureInfo(UUID, domainAddress) {
-	const protocolType = atob(what_is_this_written);
+const 啥啥啥_写的这是啥啊 = 'dmxlc3M=';
+function 配置信息(UUID, 域名地址) {
+	const 协议类型 = atob(啥啥啥_写的这是啥啊);
 	
-	const alias = FileName;
-	let address = domainAddress;
-	let port = 443;
+	const 别名 = FileName;
+	let 地址 = 域名地址;
+	let 端口 = 443;
 
-	const userID = UUID;
-	const encryptionMethod = 'none';
+	const 用户ID = UUID;
+	const 加密方式 = 'none';
 	
-	const transportProtocol = 'ws';
-	const spoofedDomain = domainAddress;
-	const path = '/?ed=2560';
+	const 传输层协议 = 'ws';
+	const 伪装域名 = 域名地址;
+	const 路径 = '/?ed=2560';
 	
-	let transportSecurity = ['tls', true];
-	const SNI = domainAddress;
-	const fingerprint = 'randomized';
+	let 传输层安全 = ['tls',true];
+	const SNI = 域名地址;
+	const 指纹 = 'randomized';
 
-	if (domainAddress.includes('.workers.dev')){
-		address = '';
-		port = 80;
-		transportSecurity = ['', false];
+	if (域名地址.includes('.workers.dev')){
+		地址 = 'visa.cn';
+		端口 = 80 ;
+		传输层安全 = ['',false];
 	}
 
-	const v2ray = `${protocolType}://${userID}@${address}:${port}?encryption=${encryptionMethod}&security=${transportSecurity[0]}&sni=${SNI}&fp=${fingerprint}&type=${transportProtocol}&host=${spoofedDomain}&path=${encodeURIComponent(path)}#${encodeURIComponent(alias)}`;
-	const clash = `- type: ${protocolType}
+	const v2ray = `${协议类型}://${用户ID}@${地址}:${端口}?encryption=${加密方式}&security=${传输层安全[0]}&sni=${SNI}&fp=${指纹}&type=${传输层协议}&host=${伪装域名}&path=${encodeURIComponent(路径)}#${encodeURIComponent(别名)}`;
+	const clash = `- type: ${协议类型}
   name: ${FileName}
-  server: ${address}
-  port: ${port}
-  uuid: ${userID}
-  network: ${transportProtocol}
-  tls: ${transportSecurity[1]}
+  server: ${地址}
+  port: ${端口}
+  uuid: ${用户ID}
+  network: ${传输层协议}
+  tls: ${传输层安全[1]}
   udp: false
   sni: ${SNI}
-  client-fingerprint: ${fingerprint}
+  client-fingerprint: ${指纹}
   ws-opts:
-    path: "${path}"
+    path: "${路径}"
     headers:
-      host: ${spoofedDomain}`;
-	return [v2ray, clash];
+      host: ${伪装域名}`;
+	return [v2ray,clash];
 }
 
-let subParams = ['sub', 'base64', 'b64', 'clash', 'singbox', 'sb'];
+let subParams = ['sub','base64','b64','clash','singbox','sb'];
+
 /**
  * @param {string} userID
  * @param {string | null} hostName
@@ -1397,7 +1380,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 
 		let 订阅器 = '\n';
 		if (!sub || sub == '') {
-// 			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
+			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
 			else if (proxyIP && proxyIP != '') 订阅器 += `CFCDN（访问方式）: ProxyIP\n  ${proxyIPs.join('\n  ')}\n`;
 			else 订阅器 += `CFCDN（访问方式）: 无法访问, 需要您设置 proxyIP/PROXYIP ！！！\n`;
 			订阅器 += `\n您的订阅内容由 内置 addresses/ADD* 参数变量提供\n`;
@@ -1407,7 +1390,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 			if (addressesnotlsapi.length > 0) 订阅器 += `ADDNOTLSAPI（noTLS优选域名&IP 的 API）: \n  ${addressesnotlsapi.join('\n  ')}\n`;
 			if (addressescsv.length > 0) 订阅器 += `ADDCSV（IPTest测速csv文件 限速 ${DLS} ）: \n  ${addressescsv.join('\n  ')}\n`;
 		} else {
-// 			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
+			if (enableSocks) 订阅器 += `CFCDN（访问方式）: Socks5\n  ${newSocks5s.join('\n  ')}\n${socks5List}`;
 			else if (proxyIP && proxyIP != '') 订阅器 += `CFCDN（访问方式）: ProxyIP\n  ${proxyIPs.join('\n  ')}\n`;
 			else if (RproxyIP == 'true') 订阅器 += `CFCDN（访问方式）: 自动获取ProxyIP\n`;
 			else 订阅器 += `CFCDN（访问方式）: 无法访问, 需要您设置 proxyIP/PROXYIP ！！！\n`
