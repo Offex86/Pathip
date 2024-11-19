@@ -1034,7 +1034,6 @@ const socksGreeting = new Uint8Array([5, 1, 0]); // No authentication required
 			log("SOCKS5 服务器认证失败");
 			return;
 		}
-	}
 
 	// 请求数据格式（Worker -> SOCKS5 服务器）:
 	// +----+-----+-------+------+----------+----------+
