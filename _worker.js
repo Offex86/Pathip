@@ -1095,7 +1095,7 @@ const socksGreeting = new Uint8Array([5, 1, 0]); // No authentication required
 	writer.releaseLock();
 	reader.releaseLock();
 	return socket;
-}
+	}
 
 
 /**
