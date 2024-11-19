@@ -12,7 +12,6 @@ let sub = '';// 避免项目被滥用，现已取消内置订阅器
 let subconverter = 'SUBAPI.fxxk.dedyn.io';// clash订阅转换后端，目前使用CM的订阅转换功能。自带虚假uuid和host订阅。
 let subconfig = "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Mini_MultiMode.ini"; //订阅配置文件
 let subProtocol = 'https';
-// The user name and password do not contain special characters
 // Setting the address will ignore proxyIP
 // Example:  user:pass@host:port  or  host:port
 let socks5Address = '';
@@ -971,7 +970,6 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
  * @param {function} log 日志记录函数
  */
 async function socks5Connect(addressType, addressRemote, portRemote, log) {
-	const { username, password, hostname, port } = parsedSocks5Address;
 	// 连接到 SOCKS5 代理服务器
 	const socket = connect({
 		hostname, // SOCKS5 服务器的主机名
@@ -989,7 +987,7 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 	// METHODS 字段的含义:
 	// 0x00 不需要认证
 	// 0x02 用户名/密码认证 https://datatracker.ietf.org/doc/html/rfc1929
-	const socksGreeting = new Uint8Array([5, 2, 0, 2]);
+const socksGreeting = new Uint8Array([5, 1, 0]); // No authentication required
 	// 5: SOCKS5 版本号, 2: 支持的认证方法数, 0和2: 两种认证方法（无认证和用户名/密码）
 
 	const writer = socket.writable.getWriter();
@@ -1016,9 +1014,7 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 	}
 
 	// 如果返回 0x0502，表示需要用户名/密码认证
-	if (res[1] === 0x02) {
 		log("SOCKS5 服务器需要认证");
-		if (!username || !password) {
 			log("请提供用户名和密码");
 			return;
 		}
@@ -1030,10 +1026,6 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 		// +----+------+----------+------+----------+
 		const authRequest = new Uint8Array([
 			1,                   // 认证子协议版本
-			username.length,    // 用户名长度
-			...encoder.encode(username), // 用户名
-			password.length,    // 密码长度
-			...encoder.encode(password)  // 密码
 		]);
 		await writer.write(authRequest);
 		res = (await reader.read()).value;
@@ -1112,23 +1104,18 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
  * 此函数用于解析 SOCKS5 代理地址字符串，提取出用户名、密码、主机名和端口号
  * 
  * @param {string} address SOCKS5 代理地址，格式可以是：
- *   - "username:password@hostname:port" （带认证）
  *   - "hostname:port" （不需认证）
- *   - "username:password@[ipv6]:port" （IPv6 地址需要用方括号括起来）
  */
 function socks5AddressParser(address) {
 	// 使用 "@" 分割地址，分为认证部分和服务器地址部分
 	// reverse() 是为了处理没有认证信息的情况，确保 latter 总是包含服务器地址
 	let [latter, former] = address.split("@").reverse();
-	let username, password, hostname, port;
 
 	// 如果存在 former 部分，说明提供了认证信息
 	if (former) {
 		const formers = former.split(":");
 		if (formers.length !== 2) {
-			throw new Error('无效的 SOCKS 地址格式：认证部分必须是 "username:password" 的形式');
 		}
-		[username, password] = formers;
 	}
 
 	// 解析服务器地址部分
@@ -1152,8 +1139,6 @@ function socks5AddressParser(address) {
 	//if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(hostname)) hostname = `${atob('d3d3Lg==')}${hostname}${atob('LmlwLjA5MDIyNy54eXo=')}`;
 	// 返回解析后的结果
 	return {
-		username,  // 用户名，如果没有则为 undefined
-		password,  // 密码，如果没有则为 undefined
 		hostname,  // 主机名，可以是域名、IPv4 或 IPv6 地址
 		port,     // 端口号，已转换为数字类型
 	}
